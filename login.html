@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login — Data Entry System</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+  :root {
+    --bg:#0f1117; --surface:#1a1d27; --surface2:#22263a; --border:#2e3350;
+    --accent:#4f8ef7; --accent2:#7c4dff; --success:#00c896;
+    --warning:#ffb347; --danger:#ff4d6d;
+    --text:#e8ecf4; --text2:#8892b0; --text3:#4a5568;
+    --mono:'IBM Plex Mono',monospace; --sans:'IBM Plex Sans',sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body {
+    font-family:var(--sans);
+    background:var(--bg);
+    color:var(--text);
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    overflow:hidden;
+  }
+
+  /* animated grid background */
+  body::before {
+    content:'';
+    position:fixed;inset:0;
+    background-image:
+      linear-gradient(rgba(79,142,247,.05)1px,transparent 1px),
+      linear-gradient(90deg,rgba(79,142,247,.05)1px,transparent 1px);
+    background-size:40px 40px;
+    animation:gridScroll 20s linear infinite;
+    pointer-events:none;z-index:0;
+  }
+  @keyframes gridScroll{from{background-position:0 0;}to{background-position:40px 40px;}}
+
+  /* glow orbs */
+  body::after {
+    content:'';
+    position:fixed;
+    top:-200px;left:-200px;
+    width:600px;height:600px;
+    background:radial-gradient(circle,rgba(79,142,247,.08) 0%,transparent 70%);
+    pointer-events:none;z-index:0;
+    animation:orbFloat 8s ease-in-out infinite;
+  }
+  @keyframes orbFloat{0%,100%{transform:translate(0,0);}50%{transform:translate(60px,40px);}}
+
+  .card-wrap {
+    position:relative;z-index:1;
+    width:100%;max-width:460px;
+    animation:cardIn .5s cubic-bezier(.16,1,.3,1);
+  }
+  @keyframes cardIn{from{opacity:0;transform:translateY(24px);}to{opacity:1;transform:translateY(0);}}
+
+  .card {
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:20px;
+    padding:44px 40px 40px;
+    box-shadow:0 0 0 1px rgba(255,255,255,.03),0 32px 64px rgba(0,0,0,.5),0 0 80px rgba(79,142,247,.07);
+  }
+
+  /* brand */
+  .brand {
+    display:flex;align-items:center;gap:14px;
+    margin-bottom:36px;
+  }
+  .brand-icon {
+    width:48px;height:48px;flex-shrink:0;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    border-radius:12px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:22px;
+    box-shadow:0 8px 24px rgba(79,142,247,.3);
+  }
+  .brand-text {}
+  .brand-name {
+    font-family:var(--mono);font-size:17px;font-weight:600;
+    color:var(--text);letter-spacing:-.3px;
+  }
+  .brand-sub {
+    font-size:11px;color:var(--text2);
+    letter-spacing:1.2px;text-transform:uppercase;
+    margin-top:2px;
+  }
+
+  .divider {
+    height:1px;background:var(--border);
+    margin-bottom:28px;
+  }
+
+  .heading {font-size:22px;font-weight:600;margin-bottom:5px;letter-spacing:-.3px;}
+  .subheading {font-size:13px;color:var(--text2);margin-bottom:28px;line-height:1.5;}
+
+  /* field */
+  .field {margin-bottom:22px;}
+  .field-label {
+    display:flex;align-items:center;gap:6px;
+    font-size:11px;font-weight:600;
+    color:var(--text2);text-transform:uppercase;letter-spacing:.9px;
+    margin-bottom:8px;
+    font-family:var(--mono);
+  }
+  .field-label .dot {
+    width:6px;height:6px;border-radius:50%;
+    background:var(--accent);display:inline-block;
+  }
+
+  select {
+    width:100%;
+    background:var(--surface2);
+    border:1px solid var(--border);
+    border-radius:10px;
+    color:var(--text);
+    font-family:var(--sans);
+    font-size:14px;
+    padding:12px 16px;
+    outline:none;
+    appearance:none;
+    cursor:pointer;
+    transition:border-color .2s,box-shadow .2s,background .2s;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238892b0' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;
+    background-position:right 14px center;
+    padding-right:36px;
+  }
+  select:focus {
+    border-color:var(--accent);
+    box-shadow:0 0 0 3px rgba(79,142,247,.15);
+    background-color:#252840;
+  }
+  select option{background:#1e2130;}
+
+  /* stream selector */
+  .stream-label {
+    font-size:11px;font-weight:600;
+    color:var(--text2);text-transform:uppercase;letter-spacing:.9px;
+    margin-bottom:10px;
+    font-family:var(--mono);
+    display:flex;align-items:center;gap:6px;
+  }
+  .stream-label .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);display:inline-block;}
+
+  .stream-grid {
+    display:grid;grid-template-columns:1fr 1fr;gap:12px;
+    margin-bottom:28px;
+  }
+  .stream-btn {
+    padding:20px 16px;
+    background:var(--surface2);
+    border:2px solid var(--border);
+    border-radius:12px;
+    cursor:pointer;
+    text-align:center;
+    transition:all .2s;
+    color:var(--text3);
+    font-family:var(--sans);
+    position:relative;
+    overflow:hidden;
+  }
+  .stream-btn::before {
+    content:'';position:absolute;inset:0;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    opacity:0;transition:opacity .2s;
+  }
+  .stream-btn:hover {border-color:rgba(79,142,247,.5);color:var(--text2);}
+  .stream-btn.selected {
+    border-color:var(--accent);
+    color:var(--text);
+  }
+  .stream-btn.selected::before{opacity:.08;}
+  .stream-btn.selected .s-num{color:var(--accent);}
+  .stream-check {
+    position:absolute;top:8px;right:8px;
+    width:16px;height:16px;
+    border-radius:50%;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    display:flex;align-items:center;justify-content:center;
+    font-size:9px;
+    opacity:0;transition:opacity .2s;
+  }
+  .stream-btn.selected .stream-check{opacity:1;}
+  .s-num {
+    font-family:var(--mono);font-size:30px;font-weight:600;
+    color:var(--text3);line-height:1;
+    margin-bottom:6px;
+    transition:color .2s;
+    position:relative;z-index:1;
+  }
+  .s-label {
+    font-size:12px;font-weight:500;
+    position:relative;z-index:1;
+  }
+
+  /* submit button */
+  .btn-continue {
+    width:100%;
+    padding:14px;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    border:none;border-radius:10px;
+    color:#fff;font-size:14px;font-weight:600;
+    cursor:pointer;letter-spacing:.3px;
+    font-family:var(--sans);
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    transition:opacity .2s,transform .15s,box-shadow .2s;
+    box-shadow:0 4px 20px rgba(79,142,247,.3);
+    position:relative;overflow:hidden;
+  }
+  .btn-continue::after {
+    content:'';position:absolute;inset:0;
+    background:linear-gradient(135deg,rgba(255,255,255,.1),transparent);
+  }
+  .btn-continue:hover:not(:disabled) {
+    opacity:.93;
+    box-shadow:0 6px 28px rgba(79,142,247,.4);
+    transform:translateY(-1px);
+  }
+  .btn-continue:active:not(:disabled){transform:scale(.98);}
+  .btn-continue:disabled {
+    opacity:.35;cursor:not-allowed;
+    box-shadow:none;
+  }
+  .btn-arrow {transition:transform .2s;}
+  .btn-continue:not(:disabled):hover .btn-arrow{transform:translateX(3px);}
+
+  /* status bar at bottom of card */
+  .status-bar {
+    display:flex;align-items:center;gap:8px;
+    margin-top:20px;
+    padding-top:18px;
+    border-top:1px solid var(--border);
+    font-size:11px;color:var(--text3);
+    font-family:var(--mono);
+  }
+  .status-dot {
+    width:6px;height:6px;border-radius:50%;
+    background:var(--success);
+    box-shadow:0 0 6px var(--success);
+    animation:pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+
+  /* error msg */
+  .login-error {
+    background:rgba(255,77,109,.1);
+    border:1px solid rgba(255,77,109,.3);
+    border-radius:8px;
+    padding:10px 14px;
+    font-size:12px;
+    color:var(--danger);
+    margin-bottom:16px;
+    display:none;
+    font-family:var(--mono);
+  }
+  .login-error.show{display:block;}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════
+     ⚙️  CONFIGURATION — UPDATE DEO NAMES HERE
+══════════════════════════════════════════════════════════ -->
+<script>
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  ★  DATA ENTRY OPERATORS — ADD / REMOVE NAMES HERE  ★       ║
+// ║  One name per line, in quotes, followed by a comma.         ║
+// ╚══════════════════════════════════════════════════════════════╝
+const DEO_LIST = [
+  "Muhammad Asif",
+  "Ayesha Siddiqui",
+  "Bilal Ahmed",
+  "Sara Khan",
+  "Zubair Malik",
+  // ← ADD MORE DEOs HERE
+];
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  ★  FORM PAGE FILENAME                                       ║
+// ║  If you rename form.html, update this too.                  ║
+// ╚══════════════════════════════════════════════════════════════╝
+const FORM_PAGE = "form.html";
+</script>
+
+<div class="card-wrap">
+  <div class="card">
+
+    <div class="brand">
+      <div class="brand-icon">📊</div>
+      <div class="brand-text">
+        <div class="brand-name">DataEntry<span style="color:var(--accent2)">Pro</span></div>
+        <div class="brand-sub">Research Data System</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="heading">Operator Sign-In</div>
+    <div class="subheading">Select your name and the data stream you are entering for today's session.</div>
+
+    <div class="login-error" id="loginError">Please select your name and a data stream.</div>
+
+    <div class="field">
+      <div class="field-label"><span class="dot"></span> Data Entry Operator</div>
+      <select id="deoSelect" onchange="checkReady()">
+        <option value="">— Select your name —</option>
+      </select>
+    </div>
+
+    <div class="stream-label"><span class="dot"></span> Data Stream</div>
+    <div class="stream-grid">
+      <div class="stream-btn" id="s1" onclick="selectStream(1)">
+        <div class="stream-check">✓</div>
+        <div class="s-num">1</div>
+        <div class="s-label">Stream 1</div>
+      </div>
+      <div class="stream-btn" id="s2" onclick="selectStream(2)">
+        <div class="stream-check">✓</div>
+        <div class="s-num">2</div>
+        <div class="s-label">Stream 2</div>
+      </div>
+    </div>
+
+    <button class="btn-continue" id="continueBtn" disabled onclick="doLogin()">
+      Continue to Data Entry
+      <span class="btn-arrow">→</span>
+    </button>
+
+    <div class="status-bar">
+      <div class="status-dot"></div>
+      System ready &nbsp;·&nbsp; Both streams available
+    </div>
+
+  </div>
+</div>
+
+<script>
+let selectedStream = null;
+
+// Populate DEO dropdown
+(function() {
+  const sel = document.getElementById('deoSelect');
+  DEO_LIST.forEach(name => {
+    const opt = document.createElement('option');
+    opt.value = name; opt.textContent = name;
+    sel.appendChild(opt);
+  });
+})();
+
+function selectStream(n) {
+  selectedStream = n;
+  document.getElementById('s1').classList.toggle('selected', n === 1);
+  document.getElementById('s2').classList.toggle('selected', n === 2);
+  document.getElementById('loginError').classList.remove('show');
+  checkReady();
+}
+
+function checkReady() {
+  const deo = document.getElementById('deoSelect').value;
+  document.getElementById('continueBtn').disabled = !(deo && selectedStream);
+}
+
+function doLogin() {
+  const deo = document.getElementById('deoSelect').value;
+  if (!deo || !selectedStream) {
+    document.getElementById('loginError').classList.add('show');
+    return;
+  }
+  // Pass session data via sessionStorage (same origin) then redirect
+  sessionStorage.setItem('deo', deo);
+  sessionStorage.setItem('stream', selectedStream);
+  window.location.href = FORM_PAGE;
+}
+</script>
+</body>
+</html>
