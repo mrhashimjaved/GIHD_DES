@@ -92,7 +92,7 @@
 // ║  3. Deploy → New Deployment → Web App → Anyone               ║
 // ║  4. Copy the URL and paste below                             ║
 // ╚═══════════════════════════════════════════════════════════════╝
-const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbw2bR4Tav6v6DjsFTzdNIcjpctLncc6ZQGjWSMjfyOqBrnzJaSsIsMyLF9PY12lC13phg/exec";
+const GOOGLE_SHEETS_URL = "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE";
 
 // DEO_LIST is defined in login.html — not needed here.
 

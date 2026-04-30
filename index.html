@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DataEntry Pro — Research Data Collection System</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap');
+
+/* ── RESET & TOKENS ──────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --navy:      #0b1120;
+  --navy2:     #111827;
+  --navy3:     #1e2d45;
+  --navy4:     #243352;
+  --border:    #1e3a5f;
+  --border2:   #2a4a70;
+  --ice:       #e8f0f8;
+  --ice2:      #c8d9ee;
+  --teal:      #2dd4bf;
+  --teal2:     #0f9488;
+  --amber:     #f59e0b;
+  --text:      #e2eaf4;
+  --text2:     #94a8c4;
+  --text3:     #5a7494;
+  --serif:     'Playfair Display', Georgia, serif;
+  --sans:      'DM Sans', sans-serif;
+  --mono:      'DM Mono', monospace;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--sans);
+  background: var(--navy);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── NOISE TEXTURE OVERLAY ───────────────────────────────── */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.035'/%3E%3C/svg%3E");
+  opacity: 0.4;
+}
+
+/* ── BACKGROUND GRADIENT ORBS ────────────────────────────── */
+.bg-orb {
+  position: fixed; border-radius: 50%;
+  pointer-events: none; z-index: 0;
+  filter: blur(120px);
+}
+.bg-orb-1 {
+  width: 600px; height: 600px;
+  top: -200px; left: -100px;
+  background: radial-gradient(circle, rgba(45,212,191,.07) 0%, transparent 70%);
+  animation: orbDrift1 18s ease-in-out infinite;
+}
+.bg-orb-2 {
+  width: 500px; height: 500px;
+  bottom: -100px; right: -100px;
+  background: radial-gradient(circle, rgba(245,158,11,.06) 0%, transparent 70%);
+  animation: orbDrift2 22s ease-in-out infinite;
+}
+.bg-orb-3 {
+  width: 400px; height: 400px;
+  top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  background: radial-gradient(circle, rgba(30,58,95,.5) 0%, transparent 70%);
+}
+@keyframes orbDrift1 {
+  0%,100% { transform: translate(0,0); }
+  33%      { transform: translate(40px, 30px); }
+  66%      { transform: translate(-20px, 50px); }
+}
+@keyframes orbDrift2 {
+  0%,100% { transform: translate(0,0); }
+  50%      { transform: translate(-50px, -30px); }
+}
+
+/* ── LAYOUT ──────────────────────────────────────────────── */
+.page { position: relative; z-index: 1; }
+
+/* ── TOPBAR ──────────────────────────────────────────────── */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 48px;
+  height: 64px;
+  background: rgba(11,17,32,.8);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(45,212,191,.1);
+  animation: fadeDown .6s ease both;
+}
+@keyframes fadeDown {
+  from { opacity: 0; transform: translateY(-12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.topbar-logo {
+  display: flex; align-items: center; gap: 10px;
+}
+.logo-mark {
+  width: 32px; height: 32px;
+  background: linear-gradient(135deg, var(--teal), var(--teal2));
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  box-shadow: 0 0 20px rgba(45,212,191,.3);
+}
+.logo-text {
+  font-family: var(--mono); font-size: 14px; font-weight: 500;
+  color: var(--text); letter-spacing: -.3px;
+}
+.logo-text span { color: var(--teal); }
+
+.topbar-nav {
+  display: flex; align-items: center; gap: 8px;
+}
+.nav-link {
+  color: var(--text2); font-size: 13px; font-weight: 400;
+  text-decoration: none; padding: 6px 14px;
+  border-radius: 6px;
+  transition: color .2s, background .2s;
+}
+.nav-link:hover { color: var(--text); background: rgba(255,255,255,.05); }
+
+.btn-nav {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--teal); color: var(--navy);
+  font-family: var(--sans); font-size: 13px; font-weight: 500;
+  padding: 8px 18px; border-radius: 7px;
+  text-decoration: none;
+  border: none; cursor: pointer;
+  transition: background .2s, transform .15s, box-shadow .2s;
+  box-shadow: 0 0 20px rgba(45,212,191,.25);
+}
+.btn-nav:hover {
+  background: #34d9c6;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 24px rgba(45,212,191,.4);
+}
+.btn-nav:active { transform: scale(.97); }
+
+/* ── HERO ─────────────────────────────────────────────────── */
+.hero {
+  min-height: 100vh;
+  display: flex; align-items: center;
+  padding: 120px 48px 80px;
+  position: relative;
+}
+
+/* Vertical rule accent */
+.hero::before {
+  content: '';
+  position: absolute;
+  left: 48px; top: 120px; bottom: 80px;
+  width: 1px;
+  background: linear-gradient(to bottom,
+    transparent 0%,
+    rgba(45,212,191,.3) 20%,
+    rgba(45,212,191,.3) 80%,
+    transparent 100%
+  );
+}
+
+.hero-inner {
+  max-width: 1100px; margin: 0 auto; width: 100%;
+  display: grid; grid-template-columns: 1fr 420px; gap: 80px; align-items: center;
+}
+
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--mono); font-size: 11px; font-weight: 500;
+  color: var(--teal); text-transform: uppercase; letter-spacing: 1.5px;
+  margin-bottom: 20px;
+  animation: fadeUp .7s .1s ease both;
+}
+.eyebrow-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--teal);
+  box-shadow: 0 0 8px var(--teal);
+  animation: pulse 2.5s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%,100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: .5; transform: scale(.8); }
+}
+
+.hero-title {
+  font-family: var(--serif);
+  font-size: clamp(36px, 5vw, 58px);
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: -.5px;
+  color: var(--ice);
+  margin-bottom: 24px;
+  animation: fadeUp .7s .2s ease both;
+}
+.hero-title em {
+  font-style: italic;
+  color: var(--teal);
+}
+.hero-title .underline-accent {
+  position: relative; display: inline-block;
+}
+.hero-title .underline-accent::after {
+  content: '';
+  position: absolute; bottom: 2px; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--amber), transparent);
+  border-radius: 2px;
+}
+
+.hero-desc {
+  font-size: 16px; font-weight: 300;
+  color: var(--text2); line-height: 1.75;
+  max-width: 520px;
+  margin-bottom: 40px;
+  animation: fadeUp .7s .3s ease both;
+}
+.hero-desc strong { color: var(--text); font-weight: 500; }
+
+.hero-actions {
+  display: flex; align-items: center; gap: 16px;
+  animation: fadeUp .7s .4s ease both;
+}
+.btn-primary {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--teal); color: var(--navy);
+  font-family: var(--sans); font-size: 15px; font-weight: 500;
+  padding: 14px 28px; border-radius: 10px;
+  text-decoration: none;
+  transition: all .2s;
+  box-shadow: 0 4px 32px rgba(45,212,191,.3);
+}
+.btn-primary:hover {
+  background: #34d9c6;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 40px rgba(45,212,191,.45);
+}
+.btn-primary:active { transform: scale(.97); }
+.btn-primary .arrow {
+  font-size: 18px;
+  transition: transform .2s;
+}
+.btn-primary:hover .arrow { transform: translateX(3px); }
+
+.btn-secondary {
+  display: inline-flex; align-items: center; gap: 8px;
+  color: var(--text2); font-size: 14px; font-weight: 400;
+  text-decoration: none;
+  padding: 14px 20px; border-radius: 10px;
+  border: 1px solid var(--border2);
+  transition: all .2s;
+}
+.btn-secondary:hover {
+  color: var(--text);
+  border-color: rgba(45,212,191,.3);
+  background: rgba(45,212,191,.05);
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── HERO CARD (right side) ──────────────────────────────── */
+.hero-card {
+  background: linear-gradient(145deg, var(--navy3), var(--navy2));
+  border: 1px solid var(--border2);
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: 0 32px 80px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.05);
+  animation: fadeUp .7s .5s ease both;
+  position: relative; overflow: hidden;
+}
+.hero-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(45,212,191,.4), transparent);
+}
+.card-header {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+.card-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+}
+.card-dot-r { background: #ff5f57; }
+.card-dot-y { background: #febc2e; }
+.card-dot-g { background: #28c840; }
+.card-title-bar {
+  flex: 1; text-align: center;
+  font-family: var(--mono); font-size: 11px; color: var(--text3);
+}
+
+.stat-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+  margin-bottom: 20px;
+}
+.stat-item {
+  background: rgba(0,0,0,.2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+}
+.stat-num {
+  font-family: var(--mono); font-size: 22px; font-weight: 500;
+  color: var(--teal); line-height: 1;
+  margin-bottom: 4px;
+}
+.stat-label {
+  font-size: 11px; color: var(--text3);
+  text-transform: uppercase; letter-spacing: .8px;
+}
+
+.stream-row {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  margin-bottom: 16px;
+}
+.stream-pill {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  background: rgba(45,212,191,.08);
+  border: 1px solid rgba(45,212,191,.2);
+  border-radius: 8px;
+  padding: 10px;
+  font-family: var(--mono); font-size: 12px;
+  color: var(--teal);
+}
+.stream-pill-2 {
+  background: rgba(124,77,255,.08);
+  border-color: rgba(124,77,255,.25);
+  color: #b094ff;
+}
+
+.card-tools {
+  display: flex; flex-direction: column; gap: 6px;
+}
+.tool-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px;
+  background: rgba(0,0,0,.15);
+  border-radius: 6px;
+  font-size: 12px; color: var(--text2);
+}
+.tool-check {
+  width: 16px; height: 16px; border-radius: 4px;
+  background: rgba(45,212,191,.2);
+  border: 1px solid rgba(45,212,191,.4);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; color: var(--teal);
+  flex-shrink: 0;
+}
+
+/* ── DIVIDER ─────────────────────────────────────────────── */
+.section-divider {
+  max-width: 1100px; margin: 0 auto;
+  display: flex; align-items: center; gap: 20px;
+  padding: 0 48px;
+}
+.divider-line {
+  flex: 1; height: 1px; background: var(--border);
+}
+.divider-label {
+  font-family: var(--mono); font-size: 11px;
+  color: var(--text3); letter-spacing: 1px; text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* ── FEATURES SECTION ────────────────────────────────────── */
+.features {
+  padding: 80px 48px;
+}
+.features-inner { max-width: 1100px; margin: 0 auto; }
+
+.section-label {
+  font-family: var(--mono); font-size: 11px; font-weight: 500;
+  color: var(--teal); text-transform: uppercase; letter-spacing: 1.5px;
+  margin-bottom: 12px;
+}
+.section-title {
+  font-family: var(--serif); font-size: clamp(26px, 3.5vw, 38px);
+  font-weight: 700; color: var(--ice);
+  line-height: 1.2; letter-spacing: -.3px;
+  margin-bottom: 48px;
+  max-width: 540px;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+.feature-card {
+  background: linear-gradient(145deg, var(--navy3), var(--navy2));
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px;
+  position: relative; overflow: hidden;
+  transition: border-color .3s, transform .3s, box-shadow .3s;
+}
+.feature-card::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(145deg, rgba(45,212,191,.04), transparent);
+  opacity: 0; transition: opacity .3s;
+}
+.feature-card:hover {
+  border-color: rgba(45,212,191,.3);
+  transform: translateY(-3px);
+  box-shadow: 0 16px 48px rgba(0,0,0,.3);
+}
+.feature-card:hover::after { opacity: 1; }
+
+.feature-icon {
+  width: 44px; height: 44px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; margin-bottom: 16px;
+  position: relative; z-index: 1;
+}
+.fi-teal  { background: rgba(45,212,191,.12); border: 1px solid rgba(45,212,191,.2); }
+.fi-amber { background: rgba(245,158,11,.12); border: 1px solid rgba(245,158,11,.2); }
+.fi-blue  { background: rgba(79,142,247,.12); border: 1px solid rgba(79,142,247,.2); }
+
+.feature-title {
+  font-size: 15px; font-weight: 500; color: var(--ice);
+  margin-bottom: 8px; position: relative; z-index: 1;
+}
+.feature-desc {
+  font-size: 13px; font-weight: 300; color: var(--text2);
+  line-height: 1.65; position: relative; z-index: 1;
+}
+
+/* ── TOOLS SECTION ───────────────────────────────────────── */
+.tools-section {
+  padding: 0 48px 80px;
+}
+.tools-inner { max-width: 1100px; margin: 0 auto; }
+
+.tools-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;
+  margin-top: 48px;
+}
+.tool-card {
+  background: var(--navy2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 24px 28px;
+  display: flex; align-items: flex-start; gap: 18px;
+  transition: border-color .25s, background .25s;
+}
+.tool-card:hover {
+  border-color: var(--border2);
+  background: var(--navy3);
+}
+.tool-badge {
+  font-family: var(--mono); font-size: 11px; font-weight: 500;
+  padding: 4px 10px; border-radius: 5px;
+  flex-shrink: 0; margin-top: 2px;
+  letter-spacing: .5px;
+}
+.tb-teal  { background: rgba(45,212,191,.12); color: var(--teal); border: 1px solid rgba(45,212,191,.2); }
+.tb-amber { background: rgba(245,158,11,.12); color: var(--amber); border: 1px solid rgba(245,158,11,.2); }
+.tb-blue  { background: rgba(79,142,247,.12); color: #7eb3ff; border: 1px solid rgba(79,142,247,.2); }
+.tb-rose  { background: rgba(251,113,133,.12); color: #fca5b0; border: 1px solid rgba(251,113,133,.2); }
+
+.tool-info {}
+.tool-name {
+  font-size: 14px; font-weight: 500; color: var(--ice); margin-bottom: 5px;
+}
+.tool-desc {
+  font-size: 13px; font-weight: 300; color: var(--text2); line-height: 1.6;
+}
+.tool-items {
+  margin-top: 8px;
+  font-family: var(--mono); font-size: 11px; color: var(--text3);
+}
+
+/* ── CTA SECTION ─────────────────────────────────────────── */
+.cta-section {
+  padding: 80px 48px 100px;
+}
+.cta-inner {
+  max-width: 1100px; margin: 0 auto;
+  background: linear-gradient(135deg, var(--navy3) 0%, var(--navy4) 100%);
+  border: 1px solid var(--border2);
+  border-radius: 24px;
+  padding: 64px;
+  text-align: center;
+  position: relative; overflow: hidden;
+}
+.cta-inner::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--teal), transparent);
+}
+.cta-inner::after {
+  content: '';
+  position: absolute;
+  width: 400px; height: 400px;
+  top: 50%; left: 50%; transform: translate(-50%,-50%);
+  background: radial-gradient(circle, rgba(45,212,191,.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+.cta-label {
+  font-family: var(--mono); font-size: 11px; color: var(--teal);
+  text-transform: uppercase; letter-spacing: 1.5px;
+  margin-bottom: 16px;
+}
+.cta-title {
+  font-family: var(--serif); font-size: clamp(28px, 4vw, 42px);
+  font-weight: 700; color: var(--ice);
+  line-height: 1.15; margin-bottom: 16px;
+  position: relative; z-index: 1;
+}
+.cta-desc {
+  font-size: 15px; color: var(--text2); font-weight: 300;
+  max-width: 480px; margin: 0 auto 36px;
+  line-height: 1.7; position: relative; z-index: 1;
+}
+.cta-btn {
+  display: inline-flex; align-items: center; gap: 10px;
+  background: var(--teal); color: var(--navy);
+  font-family: var(--sans); font-size: 16px; font-weight: 500;
+  padding: 16px 36px; border-radius: 12px;
+  text-decoration: none;
+  transition: all .2s;
+  box-shadow: 0 8px 40px rgba(45,212,191,.3);
+  position: relative; z-index: 1;
+}
+.cta-btn:hover {
+  background: #34d9c6;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 48px rgba(45,212,191,.45);
+}
+
+/* ── FOOTER ──────────────────────────────────────────────── */
+footer {
+  border-top: 1px solid var(--border);
+  padding: 32px 48px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.footer-left {
+  display: flex; align-items: center; gap: 10px;
+}
+.footer-logo {
+  font-family: var(--mono); font-size: 13px; color: var(--text3);
+}
+.footer-logo span { color: var(--teal); }
+.footer-right {
+  font-size: 12px; color: var(--text3);
+}
+.footer-right a { color: var(--text3); text-decoration: none; }
+.footer-right a:hover { color: var(--teal); }
+
+/* ── SCROLL ANIMATIONS ───────────────────────────────────── */
+.reveal {
+  opacity: 0; transform: translateY(24px);
+  transition: opacity .6s ease, transform .6s ease;
+}
+.reveal.visible {
+  opacity: 1; transform: translateY(0);
+}
+
+/* ── RESPONSIVE ──────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .topbar { padding: 0 24px; }
+  .topbar-nav .nav-link { display: none; }
+  .hero { padding: 100px 24px 60px; }
+  .hero::before { left: 24px; }
+  .hero-inner { grid-template-columns: 1fr; gap: 48px; }
+  .hero-card { max-width: 480px; }
+  .features, .tools-section, .cta-section { padding-left: 24px; padding-right: 24px; }
+  .features-grid { grid-template-columns: 1fr 1fr; }
+  .tools-grid { grid-template-columns: 1fr; }
+  .cta-inner { padding: 40px 28px; }
+  .section-divider { padding: 0 24px; }
+  footer { padding: 24px; flex-direction: column; gap: 12px; text-align: center; }
+}
+@media (max-width: 580px) {
+  .features-grid { grid-template-columns: 1fr; }
+  .hero-actions { flex-direction: column; align-items: flex-start; }
+  .stat-grid { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="bg-orb bg-orb-1"></div>
+<div class="bg-orb bg-orb-2"></div>
+<div class="bg-orb bg-orb-3"></div>
+
+<div class="page">
+
+  <!-- ── TOPBAR ───────────────────────────────────────────── -->
+  <header class="topbar">
+    <div class="topbar-logo">
+      <div class="logo-mark">📊</div>
+      <div class="logo-text">DataEntry<span>Pro</span></div>
+    </div>
+    <nav class="topbar-nav">
+      <a href="#features" class="nav-link">Features</a>
+      <a href="#tools" class="nav-link">Tools</a>
+      <a href="login.html" class="btn-nav">
+        Sign In <span>→</span>
+      </a>
+    </nav>
+  </header>
+
+  <!-- ── HERO ─────────────────────────────────────────────── -->
+  <section class="hero">
+    <div class="hero-inner">
+
+      <div class="hero-content">
+        <div class="hero-eyebrow">
+          <span class="eyebrow-dot"></span>
+          Child Mental Health Research · Field Data System
+        </div>
+        <h1 class="hero-title">
+          Structured data entry for
+          <em>research</em> that
+          <span class="underline-accent">matters</span>
+        </h1>
+        <p class="hero-desc">
+          A purpose-built field data collection system for school-based mental health research.
+          <strong>Dual-stream entry, real-time validation,</strong> and direct Google Sheets integration
+          — designed for research teams working in the field.
+        </p>
+        <div class="hero-actions">
+          <a href="login.html" class="btn-primary">
+            Start Data Entry <span class="arrow">→</span>
+          </a>
+          <a href="#features" class="btn-secondary">
+            Learn more ↓
+          </a>
+        </div>
+      </div>
+
+      <!-- mock UI card -->
+      <div class="hero-card">
+        <div class="card-header">
+          <div class="card-dot card-dot-r"></div>
+          <div class="card-dot card-dot-y"></div>
+          <div class="card-dot card-dot-g"></div>
+          <div class="card-title-bar">DataEntryPro — Session</div>
+        </div>
+
+        <div class="stat-grid">
+          <div class="stat-item">
+            <div class="stat-num">102</div>
+            <div class="stat-label">Variables</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-num">60</div>
+            <div class="stat-label">Schools</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-num">2</div>
+            <div class="stat-label">Data Streams</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-num">0</div>
+            <div class="stat-label">Missing Allowed</div>
+          </div>
+        </div>
+
+        <div class="stream-row">
+          <div class="stream-pill">◉ Stream 1</div>
+          <div class="stream-pill stream-pill-2">◉ Stream 2</div>
+        </div>
+
+        <div class="card-tools">
+          <div class="tool-row">
+            <div class="tool-check">✓</div>
+            Demographics &amp; Identifiers
+          </div>
+          <div class="tool-row">
+            <div class="tool-check">✓</div>
+            MMAPP (32 items)
+          </div>
+          <div class="tool-row">
+            <div class="tool-check">✓</div>
+            RCADS (25 items)
+          </div>
+          <div class="tool-row">
+            <div class="tool-check">✓</div>
+            Assessor Notes
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── DIVIDER ───────────────────────────────────────────── -->
+  <div class="section-divider">
+    <div class="divider-line"></div>
+    <div class="divider-label">System Capabilities</div>
+    <div class="divider-line"></div>
+  </div>
+
+  <!-- ── FEATURES ─────────────────────────────────────────── -->
+  <section class="features" id="features">
+    <div class="features-inner">
+      <div class="section-label reveal">Built for fieldwork</div>
+      <h2 class="section-title reveal">Everything a research team needs in the field</h2>
+
+      <div class="features-grid">
+
+        <div class="feature-card reveal">
+          <div class="feature-icon fi-teal">🔒</div>
+          <div class="feature-title">Operator Login</div>
+          <div class="feature-desc">Each Data Entry Operator selects their name and stream before entering data. Every record is stamped with the DEO identity and timestamp automatically.</div>
+        </div>
+
+        <div class="feature-card reveal">
+          <div class="feature-icon fi-amber">⚡</div>
+          <div class="feature-title">Real-time Validation</div>
+          <div class="feature-desc">Every field is validated on entry — range checks, required fields, and special missing codes (999 / 888 / 777 / 222) are enforced before submission.</div>
+        </div>
+
+        <div class="feature-card reveal">
+          <div class="feature-icon fi-blue">🔁</div>
+          <div class="feature-title">Duplicate Detection</div>
+          <div class="feature-desc">Records are checked against School ID, Child Name, Father Name, Roll Number and Class before saving — preventing accidental double-entry across sessions.</div>
+        </div>
+
+        <div class="feature-card reveal">
+          <div class="feature-icon fi-teal">📊</div>
+          <div class="feature-title">Dual Stream Entry</div>
+          <div class="feature-desc">Stream 1 and Stream 2 are written to separate sheets in Google Sheets automatically, keeping parallel data collection clean and separated from the start.</div>
+        </div>
+
+        <div class="feature-card reveal">
+          <div class="feature-icon fi-amber">🗂️</div>
+          <div class="feature-title">SPSS-Ready Output</div>
+          <div class="feature-desc">Columns are written in fixed variable order matching your SPSS codebook — every submission, every time — so no reordering is needed before analysis.</div>
+        </div>
+
+        <div class="feature-card reveal">
+          <div class="feature-icon fi-blue">☁️</div>
+          <div class="feature-title">Google Sheets Sync</div>
+          <div class="feature-desc">Data is submitted directly to Google Sheets via Apps Script. No server, no database — just a spreadsheet your team can access in real time from anywhere.</div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ── DIVIDER ───────────────────────────────────────────── -->
+  <div class="section-divider">
+    <div class="divider-line"></div>
+    <div class="divider-label">Instruments Included</div>
+    <div class="divider-line"></div>
+  </div>
+
+  <!-- ── TOOLS ────────────────────────────────────────────── -->
+  <section class="tools-section" id="tools">
+    <div class="tools-inner">
+      <div class="section-label reveal">Assessment instruments</div>
+      <h2 class="section-title reveal">All tools in a single structured form</h2>
+
+      <div class="tools-grid">
+
+        <div class="tool-card reveal">
+          <div class="tool-badge tb-blue">Demographics</div>
+          <div class="tool-info">
+            <div class="tool-name">Participant Identifiers &amp; Demographics</div>
+            <div class="tool-desc">School ID, child name, father name, roll number, class, age, gender, siblings, parental status, occupation, education, contact and address.</div>
+            <div class="tool-items">20 variables · Sections A–E</div>
+          </div>
+        </div>
+
+        <div class="tool-card reveal">
+          <div class="tool-badge tb-teal">Tool A</div>
+          <div class="tool-info">
+            <div class="tool-name">MMAPP — Mental Health Assessment for Pakistan Primary</div>
+            <div class="tool-desc">32-item instrument covering depression, anxiety, somatic symptoms, functional impairment, help-seeking behaviour and self-harm ideation.</div>
+            <div class="tool-items">55 variables · Sections F–J · Scale 0–3</div>
+          </div>
+        </div>
+
+        <div class="tool-card reveal">
+          <div class="tool-badge tb-amber">Tool B</div>
+          <div class="tool-info">
+            <div class="tool-name">RCADS — Revised Children's Anxiety and Depression Scale</div>
+            <div class="tool-desc">25-item validated instrument assessing anxiety disorders and major depressive disorder symptoms in children and adolescents.</div>
+            <div class="tool-items">25 variables · Section K · Scale 0–3</div>
+          </div>
+        </div>
+
+        <div class="tool-card reveal">
+          <div class="tool-badge tb-rose">Notes</div>
+          <div class="tool-info">
+            <div class="tool-name">Assessor Notes &amp; Observer Name</div>
+            <div class="tool-desc">Free-text observations recorded during or after the assessment session, along with the name of the assessor conducting the interview.</div>
+            <div class="tool-items">2 variables · Section L</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ── CTA ──────────────────────────────────────────────── -->
+  <section class="cta-section">
+    <div class="cta-inner reveal">
+      <div class="cta-label">Ready to begin</div>
+      <h2 class="cta-title">Select your operator and start entering data</h2>
+      <p class="cta-desc">Choose your name, select your assigned data stream, and the form will be ready. All records sync directly to Google Sheets.</p>
+      <a href="login.html" class="cta-btn">
+        Go to Login <span>→</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- ── FOOTER ────────────────────────────────────────────── -->
+  <footer>
+    <div class="footer-left">
+      <div class="logo-mark" style="width:24px;height:24px;font-size:12px;border-radius:6px;">📊</div>
+      <div class="footer-logo">DataEntry<span>Pro</span> · Research Data System</div>
+    </div>
+    <div class="footer-right">
+      Built for field research &nbsp;·&nbsp;
+      <a href="login.html">Login →</a>
+    </div>
+  </footer>
+
+</div><!-- /page -->
+
+<script>
+// Scroll reveal
+const observer = new IntersectionObserver(
+  entries => entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+      observer.unobserve(e.target);
+    }
+  }),
+  { threshold: 0.12 }
+);
+document.querySelectorAll('.reveal').forEach((el, i) => {
+  el.style.transitionDelay = (i % 3) * 0.08 + 's';
+  observer.observe(el);
+});
+
+// Smooth scroll for anchor links
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    document.querySelector(a.getAttribute('href'))
+      ?.scrollIntoView({ behavior: 'smooth' });
+  });
+});
+</script>
+</body>
+</html>
