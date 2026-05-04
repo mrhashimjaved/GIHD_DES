@@ -884,6 +884,43 @@ function showToast(msg, type) {
   document.getElementById('toastWrap').appendChild(t);
   setTimeout(() => t.remove(), 3500);
 }
+
+// ── TAB SCROLL FIX ────────────────────────────────────────
+// Ensures tabbing always keeps the focused field visible,
+// accounting for the sticky topbar and sticky submit bar.
+(function initTabScroll() {
+  const TOPBAR_H = 60;  // sticky topbar height
+  const BOTTOM_H = 64;  // sticky submit bar height
+  const PADDING  = 32;  // breathing room above/below
+
+  document.addEventListener('focusin', function(e) {
+    const el = e.target;
+    if (!el.matches('input, select, textarea')) return;
+
+    // Double rAF: wait for browser's own focus-scroll to settle,
+    // then apply our offset correction on top of it.
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const rect      = el.getBoundingClientRect();
+        const safeTop   = TOPBAR_H + PADDING;
+        const safeBot   = window.innerHeight - BOTTOM_H - PADDING;
+
+        let delta = 0;
+        if (rect.top < safeTop) {
+          // Field is above visible zone (under topbar)
+          delta = rect.top - safeTop;
+        } else if (rect.bottom > safeBot) {
+          // Field is below visible zone (under submit bar)
+          delta = rect.bottom - safeBot;
+        }
+
+        if (delta !== 0) {
+          window.scrollBy({ top: delta, behavior: 'smooth' });
+        }
+      });
+    });
+  });
+})();
 </script>
 
 <!-- Google Apps Script is in the separate file: google_apps_script.gs -->
