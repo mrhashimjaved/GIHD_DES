@@ -699,7 +699,7 @@ function buildField(f) {
       ? f.missingCodes.map(c => [String(c), MISSING_CODES[c] || c])
       : Object.entries(MISSING_CODES);
     const btns = codes.map(([code, label]) =>
-      `<button class="mc-btn" title="${label}" data-field="${f.id}" data-code="${code}"
+      `<button class="mc-btn" tabindex="-1" title="${label}" data-field="${f.id}" data-code="${code}"
         onclick="applyMissingCode('${f.id}',${code})">${code}</button>`
     ).join('');
     missingHtml = `<div class="missing-codes">${btns}</div>`;
@@ -884,57 +884,45 @@ function showToast(msg, type) {
   document.getElementById('toastWrap').appendChild(t);
   setTimeout(() => t.remove(), 3500);
 }
+
+// ── TAB SCROLL FIX ────────────────────────────────────────
+// Ensures tabbing always keeps the focused field visible,
+// accounting for the sticky topbar and sticky submit bar.
+(function initTabScroll() {
+  const TOPBAR_H = 60;  // sticky topbar height
+  const BOTTOM_H = 64;  // sticky submit bar height
+  const PADDING  = 32;  // breathing room above/below
+
+  document.addEventListener('focusin', function(e) {
+    const el = e.target;
+    if (!el.matches('input, select, textarea')) return;
+
+    // Double rAF: wait for browser's own focus-scroll to settle,
+    // then apply our offset correction on top of it.
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const rect      = el.getBoundingClientRect();
+        const safeTop   = TOPBAR_H + PADDING;
+        const safeBot   = window.innerHeight - BOTTOM_H - PADDING;
+
+        let delta = 0;
+        if (rect.top < safeTop) {
+          // Field is above visible zone (under topbar)
+          delta = rect.top - safeTop;
+        } else if (rect.bottom > safeBot) {
+          // Field is below visible zone (under submit bar)
+          delta = rect.bottom - safeBot;
+        }
+
+        if (delta !== 0) {
+          window.scrollBy({ top: delta, behavior: 'smooth' });
+        }
+      });
+    });
+  });
+})();
 </script>
 
-<!--
-═══════════════════════════════════════════════════════════════════
-  📋  GOOGLE APPS SCRIPT — paste this in Extensions → Apps Script
-═══════════════════════════════════════════════════════════════════
-
-function doPost(e) {
-  try {
-    const data = JSON.parse(e.postData.contents);
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const sheetName = 'Stream' + data.stream;
-    let sheet = ss.getSheetByName(sheetName);
-    if (!sheet) sheet = ss.insertSheet(sheetName);
-
-    // Build header row if empty
-    if (sheet.getLastRow() === 0) {
-      const headers = ['timestamp','deo','stream'];
-      // collect all field ids dynamically from first submission
-      Object.keys(data).forEach(k => {
-        if (!['timestamp','deo','stream','overwrite'].includes(k)) headers.push(k);
-      });
-      sheet.appendRow(headers);
-    }
-
-    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-
-    // Duplicate check if overwrite requested
-    if (data.overwrite) {
-      const idFields = ['school_code','class_num','roll_no','child_name','father_name'];
-      const allData = sheet.getDataRange().getValues();
-      const idxMap = {};
-      headers.forEach((h, i) => idxMap[h] = i);
-      for (let r = 1; r < allData.length; r++) {
-        const match = idFields.every(f => String(allData[r][idxMap[f]]).toLowerCase() === String(data[f]).toLowerCase());
-        if (match) { sheet.deleteRow(r + 1); break; }
-      }
-    }
-
-    const row = headers.map(h => data[h] !== undefined ? data[h] : '');
-    sheet.appendRow(row);
-
-    return ContentService.createTextOutput(JSON.stringify({status:'ok'}))
-      .setMimeType(ContentService.MimeType.JSON);
-  } catch(err) {
-    return ContentService.createTextOutput(JSON.stringify({status:'error', message: err.toString()}))
-      .setMimeType(ContentService.MimeType.JSON);
-  }
-}
-
-═══════════════════════════════════════════════════════════════════
--->
+<!-- Google Apps Script is in the separate file: google_apps_script.gs -->
 </body>
 </html>
