@@ -272,20 +272,11 @@
 // ║  One name per line, in quotes, followed by a comma.         ║
 // ╚══════════════════════════════════════════════════════════════╝
 const DEO_LIST = [
-  "Tayaba Asad",
-  "Sana Noor",
-  "Um ul Baneen",
-  "Mareena Bibi",
-  "Amama",
-  "Nausheen",
-  "Sami Mumtaz",
-  "Rabiya",
-  "Ayesha Waseem",
-  "Kinza",
-  "Tasmia",
-  "Arooj",
-  "Fozia",
-  "Other",
+  "Muhammad Asif",
+  "Ayesha Siddiqui",
+  "Bilal Ahmed",
+  "Sara Khan",
+  "Zubair Malik",
   // ← ADD MORE DEOs HERE
 ];
 
